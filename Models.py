@@ -30,8 +30,8 @@ class ResnetHasher(nn.Module):
             ('norm_2', nn.BatchNorm1d(250)),
             
             ('output', nn.Linear(250, 8)),
-            ('sigmoid', nn.Sigmoid()),
-            ('ontoF16', OntoF16())
+            ('tanh', nn.Tanh()),
+            #('ontoF16', OntoF16())
         ])
         self.encoder = nn.Sequential(self.enc_layers)
     
@@ -77,8 +77,8 @@ class CustomHasher(nn.Module):
             ('flat ', nn.Flatten()),
             ('full_1', nn.Linear(96 , 36)),
             ('full_2', nn.Linear(36, 8)),
-            ('sigmoid', nn.Sigmoid()),
-            ('ontoF16', OntoF16())
+            ('tanh', nn.Tanh()),
+            #('ontoF16', OntoF16())
         ])
         self.encoder = nn.Sequential(self.layers)
         
