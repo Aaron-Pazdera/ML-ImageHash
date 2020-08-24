@@ -1,6 +1,6 @@
 TrainDataset/*
 ValidDataset/*
-#__pycache__/*
+__pycache__/*
 !TrainDataset/ds.keep
 !ValidDataset/ds.keep
 
