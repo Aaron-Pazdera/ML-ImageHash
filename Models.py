@@ -17,6 +17,7 @@ class ReZero(nn.Module):
     def forward(self, x):
         return x + self.α*self.layer(x)
 
+
 class OntoF16(nn.Module):
     def __init__(self):
         super(OntoF16, self).__init__()
@@ -106,6 +107,7 @@ class CustomHasher(nn.Module):
     def visualize(self):
         from torchsummary import summary
         summary(self, (3, 64, 64))
+
 
 class SmallHasher(nn.Module):
     def __init__(self):
