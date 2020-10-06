@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.io._plugins.pil_plugin import pil_to_ndarray
 from torchvision.transforms import ToPILImage
+from PIL import Image
 
 
 class ShowTensor():
@@ -37,20 +38,30 @@ class ShowTriplet():
 show_triplet = ShowTriplet()
 
 
-def show_ntuples(ntuple, axes=True):
-    ntuple = ntuple[0] + ntuple[1]
-    n = len(ntuple)
-    n2 = n//2
-
+def show_imgpair(pair, axes=True):
     pt = ToPILImage()
-    npimgs = [pt(tensor) for tensor in ntuple]
+    npimgs = (pt(pair[0]), pt(pair[1]))
 
-    axs = plt.subplots(2, n2, figsize=(16, 5))[1]
+    axs = plt.subplots(1, 2, figsize=(10, 5))[1]
+    axs = np.ravel(axs)
+    axs[0].imshow(npimgs[0])
+    axs[1].imshow(npimgs[1])
+    if not axes:
+        axs[0].set_axis_off()
+        axs[1].set_axis_off()
+    plt.show()
+
+
+def show_matches(matches, axes=True):
+    print(matches)
+    fname_list = [tup[1] for tup in matches]
+    imgs = [Image.open(fname) for fname in fname_list]
+
+    axs = plt.subplots(1, len(imgs), figsize=(10, 5))[1]
     axs = np.ravel(axs)
 
-    for i in range(n):
-        axs[i].imshow(npimgs[i])
+    for i in range(len(imgs)):
+        axs[i].imshow(imgs[i])
         if not axes:
             axs[i].set_axis_off()
-
     plt.show()
