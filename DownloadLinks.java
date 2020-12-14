@@ -32,7 +32,7 @@ public class DownloadLinks {
 	public static void main(String[] args) {
 		// Figure out where to put the images.
 		{
-			File cwd = new File(System.getProperty("user.d	ir"));
+			File cwd = new File(System.getProperty("user.dir"));
 			trainFolder = new File(cwd, "TrainDataset");
 			validFolder = new File(cwd, "ValidDataset");
 			if (!trainFolder.isDirectory()) {

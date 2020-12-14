@@ -66,7 +66,7 @@ public class SafebooruDatasetDownloader {
 
 	private static String apiRequestURL = "https://safebooru.org/index.php?page=dapi&s=post&q=index&limit=1000&pid=";
 
-	public SafebooruDatasetDownloader() {
+	private SafebooruDatasetDownloader() {
 	}
 
 	private List<String> requestPage(int page) {
