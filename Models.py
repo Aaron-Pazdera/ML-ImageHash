@@ -3,6 +3,7 @@ from torch import nn
 import torchvision.transforms
 import torch.nn.functional as F
 from collections import OrderedDict
+from torch.nn.init import dirac_, xavier_normal_
 
 
 class ReZero(nn.Module):
@@ -35,7 +36,7 @@ class ResnetHasher(nn.Module):
             'pytorch/vision:v0.6.0', 'resnet18', pretrained=True)
         self.enc_layers = OrderedDict([
             ('resnet', self.resnet),
-            ('relu_r', nn.BatchNorm1d(1000)),
+            ('relu_r', nn.ReLU(1000)),
             ('norm_r', nn.BatchNorm1d(1000)),
 
             ('full_1', nn.Linear(1000, 500)),
@@ -63,16 +64,22 @@ class ResnetHasher(nn.Module):
 class HasherBlock(nn.Module):
     def __init__(self, block_num, in_channels, out_channels, kernel_size, kernel_stride, conv_padding, pool_num=0):
         super(HasherBlock, self).__init__()
-        self.layers = OrderedDict()
+
+        self.block_num = block_num
+
         # Set layers
-        self.layers[f'conv{block_num}'] = nn.Conv2d(
+        self.layers = OrderedDict()
+        self.layers[f'conv{self.block_num}'] = nn.Conv2d(
             in_channels, out_channels, kernel_size, kernel_stride, padding=conv_padding)
         if pool_num != 0:
-            self.layers[f'pool{block_num}'] = nn.MaxPool2d(pool_num)
-        self.layers[f'relu{block_num}'] = nn.ReLU()
-        self.layers[f'norm{block_num}'] = nn.BatchNorm2d(out_channels)
+            self.layers[f'pool{self.block_num}'] = nn.MaxPool2d(pool_num)
+        self.layers[f'relu{self.block_num}'] = nn.ReLU()
+        self.layers[f'norm{self.block_num}'] = nn.BatchNorm2d(out_channels)
 
         self.model = nn.Sequential(self.layers)
+
+    def init(self):
+        dirac_(self.layers[f'conv{self.block_num}'].weight.data)
 
     def forward(self, x):
         return self.model(x)
@@ -127,6 +134,16 @@ class SmallHasher(nn.Module):
             ('full_2', nn.Linear(24, 16)),
             ('tanh', nn.Tanh())
         ])
+
+        # Careful initialization
+        self.layers['block_1'].init()
+        self.layers['block_2'].init()
+        self.layers['block_3'].init()
+        self.layers['block_4'].init()
+        self.layers['block_5'].init()
+        xavier_normal_(self.layers['full_1'].weight.data)
+        xavier_normal_(self.layers['full_2'].weight.data)
+
         self.encoder = nn.Sequential(self.layers)
 
     def forward(self, x):
