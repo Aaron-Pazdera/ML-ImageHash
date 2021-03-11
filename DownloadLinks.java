@@ -23,35 +23,25 @@ public class DownloadLinks {
 	private static int numThreads = 32;
 
 	private static File trainFolder;
-	private static File validFolder;
 	private static List<String> trainURLs = new ArrayList<>();
-	private static List<String> validURLs = new ArrayList<>();
 	private static AtomicInteger trainNum = new AtomicInteger(0);
-	private static AtomicInteger validNum = new AtomicInteger(0);
 
 	public static void main(String[] args) {
 		// Figure out where to put the images.
 		{
 			File cwd = new File(System.getProperty("user.dir"));
-			trainFolder = new File(cwd, "TrainDataset");
-			validFolder = new File(cwd, "ValidDataset");
+			trainFolder = new File(cwd, "Dataset");
 			if (!trainFolder.isDirectory()) {
-				System.out.println(
-						"Couldn't find the TrainDataset folder. Please execute this from the project folder, which contains the TrainDataset folder.");
+				System.err.println(
+						"Couldn't find the Dataset folder. Please execute this from the project folder, which contains the Dataset folder.");
 				System.exit(0);
 			}
-			if (!validFolder.isDirectory()) {
-				System.out.println(
-						"Couldn't find the ValidDataset folder. Please execute this from the project folder, which contains the ValidDataset folder.");
-				System.exit(0);
-			}
-
 		}
 
 		// Load the links into memory and split them into train and valid datasets.
 		{
 			if (args.length != 1) {
-				System.out.println("Please provide exactly one argument, the file of links to download.");
+				System.err.println("Please provide exactly one argument, the file of links to download.");
 				System.exit(0);
 			}
 			File linkFile = new File(args[0]);
@@ -60,28 +50,23 @@ public class DownloadLinks {
 			try {
 				reader = new Scanner(linkFile);
 			} catch (FileNotFoundException e) {
-				System.out.println("The link file specified does not exist.");
+				System.err.println("The link file specified does not exist.");
 				System.exit(0);
 			}
 
-			ArrayList<String> imageURLs = new ArrayList<>();
 			while (reader.hasNext()) {
-				imageURLs.add(reader.nextLine());
+				trainURLs.add(reader.nextLine());
 			}
 
-			for (int i = 0; i < imageURLs.size(); i++) {
-				List<String> targetList = i % 4 == 0 ? validURLs : trainURLs;
-				targetList.add(imageURLs.get(i));
-			}
-			imageURLs.clear();
+			reader.close();
 		}
 
 		// Spin up a threadpool and start downloading from the links. Once each image is
 		// downloaded, save it.
 		{
 			ForkJoinPool customThreadPool = new ForkJoinPool(numThreads);
-			customThreadPool.submit(() -> trainURLs.parallelStream().forEach(url -> downloadImage(url, true)));
-			customThreadPool.submit(() -> validURLs.parallelStream().forEach(url -> downloadImage(url, false)));
+			customThreadPool.submit(() -> trainURLs.parallelStream().forEach(url -> downloadImage(url)));
+			trainURLs.forEach(url -> customThreadPool.submit(() -> downloadImage(url)));
 			try {
 				customThreadPool.shutdown();
 				customThreadPool.awaitTermination(14, TimeUnit.DAYS);
@@ -91,37 +76,38 @@ public class DownloadLinks {
 		}
 	}
 
-	private static void downloadImage(String strURL, boolean train) {
+	private static void downloadImage(String strURL) {
+		// Convert to url
 		URL url = null;
 		try {
 			url = new URL(strURL);
 		} catch (MalformedURLException e) {
 			System.err.println("Failed to convert malformed URL: " + strURL);
+			return;
 		}
 
+		// Download the image
 		BufferedImage img = openImage(url);
 		if (img == null) {
 			System.err.println("Download failed for: " + strURL);
 			return;
 		}
+
+		// Resize
 		img = resizeImage(img, 64, 64);
 
-		int imgNumber = train ? trainNum.getAndIncrement() : validNum.getAndIncrement();
-		String imgName = imgNumber + ".png";
-
+		// Save the image
+		String imgName = trainNum.getAndIncrement() + ".png";
 		try {
-			ImageIO.write(img, "png", new File(train ? trainFolder : validFolder, imgName));
+			ImageIO.write(img, "png", new File(trainFolder, imgName));
 		} catch (IOException e) {
 			System.err.println("Failed to write image: " + strURL + " to " + imgName);
 			e.printStackTrace();
 		}
-
 	}
 
 	private static BufferedImage openImage(URL imgURL) {
 		try {
-			//
-
 			final HttpURLConnection connection = (HttpURLConnection) imgURL.openConnection();
 			connection.setRequestProperty("User-Agent",
 					"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31");

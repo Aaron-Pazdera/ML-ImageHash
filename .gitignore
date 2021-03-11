@@ -1,10 +1,11 @@
-TrainDataset/*
-ValidDataset/*
+Dataset/*
+!Dataset/ds.keep
+
 __pycache__/*
 .ipynb_checkpoints/*
 .vscode/*
-!TrainDataset/ds.keep
-!ValidDataset/ds.keep
+
 Image_Downloader.jar
 Link_Scraper.jar
+Downloaded_Links.txt
 
